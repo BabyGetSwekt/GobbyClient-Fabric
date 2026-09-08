@@ -23,9 +23,10 @@ internal data class PlacedBlock(
 
 internal object SettingsLayout {
 
-    fun rowHeight(setting: Setting<*>): Int = when (setting) {
+    fun rowHeight(setting: Setting<*>, rowWidth: Int): Int = when (setting) {
         is StringSetting -> SETTINGS_ROW_H + STRING_EXTRA_H
         is ModelPreviewSetting -> SettingsPreview.cardHeight()
+        is InfoSetting -> SettingsControls.infoHeight(setting.text, rowWidth)
         else -> SETTINGS_ROW_H
     }
 
@@ -65,9 +66,10 @@ internal object SettingsLayout {
     private fun place(group: SettingGroup, x: Int, y: Int, w: Int): PlacedBlock {
         val cardY = y + SETTINGS_SECTION_H
         var rowY = cardY + SETTINGS_CARD_PAD
+        val rowW = w - SETTINGS_CARD_PAD * 2
         val rows = group.settings.map { setting ->
-            val h = rowHeight(setting)
-            PlacedRow(setting, x + SETTINGS_CARD_PAD, rowY, w - SETTINGS_CARD_PAD * 2, h).also { rowY += h }
+            val h = rowHeight(setting, rowW)
+            PlacedRow(setting, x + SETTINGS_CARD_PAD, rowY, rowW, h).also { rowY += h }
         }
         return PlacedBlock(group.title, x, y, w, cardY, rowY - cardY + SETTINGS_CARD_PAD, rows)
     }

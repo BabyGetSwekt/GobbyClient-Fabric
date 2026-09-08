@@ -7,6 +7,7 @@ import gobby.utils.Utils.equalsOneOf
 import net.minecraft.core.component.DataComponentHolder
 import net.minecraft.core.component.DataComponents
 import net.minecraft.world.item.component.CustomData
+import net.minecraft.network.chat.Component
 import net.minecraft.world.item.component.ItemLore
 import net.minecraft.world.item.enchantment.ItemEnchantments
 import net.minecraft.world.item.ItemStack
@@ -74,10 +75,13 @@ fun ItemStack.hasItemID(id: String): Boolean {
     return itemId == id
 }
 
-fun ItemStack.getLoreStrings(): List<String> {
-    val lore = this.getOrDefault(DataComponents.LORE, ItemLore.EMPTY).styledLines()
-    return lore.map { it.string }
-}
+fun ItemStack.getLoreStrings(): List<String> = getLoreLines().map { it.string }
+
+fun ItemStack.getLoreLines(): List<Component> =
+    this.getOrDefault(DataComponents.LORE, ItemLore.EMPTY).styledLines()
+
+fun Component.isStruckThrough(): Boolean =
+    style.isStrikethrough || siblings.any { it.isStruckThrough() }
 
 private fun ItemStack.findStatValue(statName: String): Double? {
     val regex = Regex("${Regex.escape(statName)}: \\+?([\\d,]+(?:\\.\\d+)?)")

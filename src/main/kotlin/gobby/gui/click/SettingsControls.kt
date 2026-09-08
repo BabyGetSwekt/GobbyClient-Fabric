@@ -19,22 +19,30 @@ private const val ROW_HOVER_RADIUS = 4
 private const val SWATCH_RADIUS = 3
 private const val SWATCH_EDGE = 1
 private const val REFRESH_BUSY_LABEL = "Refreshing..."
+private const val INFO_SCALE = 0.66f
+private const val INFO_PAD_Y = 4
+private const val INFO_MAX_LINES = 24
 
 internal object SettingsControls {
 
     fun draw(ctx: GuiGraphicsExtractor, gui: ClickGUI, row: PlacedRow, hovered: Boolean, mx: Int, my: Int) {
-        if (hovered) GobbyDraw.roundedRect(ctx, row.x, row.y, row.w, row.h, ROW_HOVER_RADIUS, cRowHover)
+        if (hovered && row.setting !is InfoSetting) {
+            GobbyDraw.roundedRect(ctx, row.x, row.y, row.w, row.h, ROW_HOVER_RADIUS, cRowHover)
+        }
         when (val s = row.setting) {
             is ModelPreviewSetting -> SettingsPreview.draw(ctx, gui, s, Rect(row.x, row.y, row.w, row.h), mx, my)
             is BooleanSetting -> booleanRow(ctx, row, s)
             is NumberSetting -> numberRow(ctx, gui, row, s)
             is RangeSetting -> rangeRow(ctx, row, s)
-            is SelectorSetting -> selectorRow(ctx, gui, row, s)
+            is SelectorSetting -> choiceRow(ctx, gui, row, s)
+            is MultipleChoiceSetting -> choiceRow(ctx, gui, row, s)
             is ColorSetting -> colorRow(ctx, row, s)
             is KeybindSetting -> keybindRow(ctx, gui, row, s)
             is StringSetting -> stringRow(ctx, gui, row, s)
             is ActionSetting -> buttonRow(ctx, row, s.name, hovered)
             is TextSetting -> textRow(ctx, row, s)
+            is InfoSetting -> infoRow(ctx, row, s)
+            is FileSetting -> fileRow(ctx, row, s)
             is RefreshSetting -> refreshRow(ctx, row, s, hovered)
             is HudButton -> hudRow(ctx, row, s, hovered)
             is DropDownSetting -> dropdownRow(ctx, gui, row, s)
@@ -48,7 +56,28 @@ internal object SettingsControls {
 
     private fun textRow(ctx: GuiGraphicsExtractor, row: PlacedRow, s: TextSetting) {
         label(ctx, row, s.name)
-        val text = s.text()
+        valueRight(ctx, row, s.text())
+    }
+
+    fun infoLines(text: String, rowWidth: Int): List<String> =
+        TextWrap.wrap(text, rowWidth - LABEL_PAD * 2, INFO_SCALE, INFO_MAX_LINES)
+
+    fun infoHeight(text: String, rowWidth: Int): Int =
+        INFO_PAD_Y * 2 + infoLines(text, rowWidth).size * TextWrap.scaledLineHeight(INFO_SCALE)
+
+    private fun infoRow(ctx: GuiGraphicsExtractor, row: PlacedRow, s: InfoSetting) {
+        val lineH = TextWrap.scaledLineHeight(INFO_SCALE)
+        infoLines(s.text, row.w).forEachIndexed { index, line ->
+            drawTextScaled(ctx, row.x + LABEL_PAD, row.y + INFO_PAD_Y + index * lineH, line, INFO_SCALE, cInkSoft, false)
+        }
+    }
+
+    private fun fileRow(ctx: GuiGraphicsExtractor, row: PlacedRow, s: FileSetting) {
+        label(ctx, row, s.name)
+        valueRight(ctx, row, "${s.entries.size} entries")
+    }
+
+    private fun valueRight(ctx: GuiGraphicsExtractor, row: PlacedRow, text: String) {
         val w = textWScaled(text, SETTINGS_VALUE_SCALE)
         val h = (tr.lineHeight * SETTINGS_VALUE_SCALE).toInt()
         drawTextScaled(ctx, row.x + row.w - RIGHT_PAD - w, row.y + (row.h - h) / 2, text, SETTINGS_VALUE_SCALE, cInkSoft, false)
@@ -138,14 +167,14 @@ internal object SettingsControls {
         chevron(ctx, row.x + row.w - RIGHT_PAD - CHEVRON_W, row.y + row.h / 2, gui.flip(s, s.expanded))
     }
 
-    private fun selectorRow(ctx: GuiGraphicsExtractor, gui: ClickGUI, row: PlacedRow, s: SelectorSetting) {
-        label(ctx, row, s.name)
-        val text = s.options.getOrElse(s.value) { "?" }
+    private fun choiceRow(ctx: GuiGraphicsExtractor, gui: ClickGUI, row: PlacedRow, s: ChoiceOptions) {
+        label(ctx, row, (s as Setting<*>).name)
+        val text = s.summary
         val w = textWScaled(text, SETTINGS_VALUE_SCALE)
         val h = (tr.lineHeight * SETTINGS_VALUE_SCALE).toInt()
         val textX = row.x + row.w - RIGHT_PAD - CHEVRON_W - 5 - w
         drawTextScaled(ctx, textX, row.y + (row.h - h) / 2, text, SETTINGS_VALUE_SCALE, cInkSoft, false)
-        chevron(ctx, row.x + row.w - RIGHT_PAD - CHEVRON_W, row.y + row.h / 2, gui.flip(s, gui.openSelector === s))
+        chevron(ctx, row.x + row.w - RIGHT_PAD - CHEVRON_W, row.y + row.h / 2, gui.flip(s as Setting<*>, gui.openSelector === s))
     }
 
     private fun chevron(ctx: GuiGraphicsExtractor, x: Int, centerY: Int, flip: Float) =

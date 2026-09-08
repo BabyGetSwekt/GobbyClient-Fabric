@@ -80,9 +80,12 @@ object InputHandler {
                 placeCaret(gui.stringField, SettingsControls.stringTextOrigin(row), mx)
             }
             is SelectorSetting -> gui.openSelector = if (gui.openSelector === setting) null else setting
+                is MultipleChoiceSetting -> gui.openSelector = if (gui.openSelector === setting) null else setting
             is ColorSetting -> setting.expanded = !setting.expanded
             is ActionSetting -> setting.action()
             is TextSetting -> {}
+            is InfoSetting -> {}
+            is FileSetting -> setting.open()
             is RefreshSetting -> if (!setting.busy()) setting.action()
             is HudButton -> setting.onClick()
             is DropDownSetting -> setting.expanded = !setting.expanded

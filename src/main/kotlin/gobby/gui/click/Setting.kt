@@ -13,7 +13,8 @@ sealed class Setting<T>(val name: String, val description: String, val defaultVa
     val isVisible: Boolean get() = !hidden && (dependency?.invoke() != false)
 
     fun recordsUndo(): Boolean = when (this) {
-        is ActionSetting, is HudButton, is DropDownSetting, is ModelPreviewSetting, is TextSetting, is RefreshSetting -> false
+        is ActionSetting, is HudButton, is DropDownSetting, is ModelPreviewSetting,
+        is TextSetting, is InfoSetting, is RefreshSetting, is FileSetting -> false
         else -> true
     }
 }
@@ -91,6 +92,20 @@ class TextSetting(
     fun childOf(dropdown: DropDownSetting) = apply { parentDropdown = dropdown; dropdown.children.add(this) }
 
     operator fun provideDelegate(thisRef: Module, property: KProperty<*>): TextSetting {
+        thisRef.settings.add(this)
+        return this
+    }
+}
+
+class InfoSetting(
+    val text: String,
+    hidden: Boolean = false
+) : Setting<Unit>("", "", Unit, hidden), ReadOnlyProperty<Any?, Unit> {
+    override fun getValue(thisRef: Any?, property: KProperty<*>) {}
+
+    fun withDependency(condition: () -> Boolean) = apply { dependency = condition }
+
+    operator fun provideDelegate(thisRef: Module, property: KProperty<*>): InfoSetting {
         thisRef.settings.add(this)
         return this
     }

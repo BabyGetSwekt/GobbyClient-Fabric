@@ -23,7 +23,9 @@ class NumberSetting(
     val floatValue: Float get() = value
     val progress: Float get() = ((value - min) / (max - min)).coerceIn(0f, 1f)
 
-    fun display(): String = if (decimals <= 0) value.roundToInt().toString() else String.format(Locale.US, "%.${decimals}f", value)
+    fun display(): String = NumberFormat.abbreviate(value, decimals)
+
+    fun editText(): String = NumberFormat.grouped(value, decimals)
 
     fun setSnapped(v: Float) { value = snap(v, min, max, step) }
 

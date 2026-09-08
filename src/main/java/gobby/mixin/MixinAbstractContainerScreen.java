@@ -1,5 +1,7 @@
 package gobby.mixin;
 
+import gobby.Gobbyclient;
+import gobby.events.gui.ScreenMouseClickEvent;
 import gobby.features.developer.DrawSlotNumbers;
 import gobby.features.dungeons.TrashItems;
 import gobby.features.dungeons.LeapOverlay;
@@ -28,6 +30,12 @@ public class MixinAbstractContainerScreen {
 
 	@Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
 	private void gobbyclient$cancelMouseClicked(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
+		ScreenMouseClickEvent event = Gobbyclient.EVENT_MANAGER.publish(
+			new ScreenMouseClickEvent((AbstractContainerScreen<?>)(Object)this, click.x(), click.y(), click.button()));
+		if (event.isCanceled()) {
+			cir.setReturnValue(true);
+			return;
+		}
 		if (LeapOverlay.INSTANCE.isOverlayActive()) {
 			if (click.button() == 0) LeapOverlay.INSTANCE.handleClick(click.x(), click.y());
 			cir.setReturnValue(true);

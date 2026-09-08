@@ -80,7 +80,7 @@ class ClickGUI : Screen(Component.literal("GobbyClient")) {
     internal var colorPickerBaseW = 0
     internal var colorPickerSBTop = 0
     internal var colorPickerSBH = 0
-    internal var openSelector: SelectorSetting? = null
+    internal var openSelector: ChoiceOptions? = null
     internal var draggingPreview: ModelPreviewSetting? = null
     internal var hexEditSetting: ColorSetting? = null
     internal val hexField = TextField(HexColor::sanitize, HexColor.MAX_LENGTH)

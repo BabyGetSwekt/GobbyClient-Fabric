@@ -20,7 +20,7 @@ private const val MIN_REVEAL = 1
 internal object SelectorPopup {
 
     private val reveal = Animation(REVEAL_MS)
-    private var shown: SelectorSetting? = null
+    private var shown: ChoiceOptions? = null
 
     fun sync(gui: ClickGUI) {
         val open = gui.openSelector
@@ -32,14 +32,14 @@ internal object SelectorPopup {
         if (open == null && reveal.idle) shown = null
     }
 
-    fun visible(): SelectorSetting? = shown
+    fun visible(): ChoiceOptions? = shown
 
     fun forget() {
         shown = null
         reveal.jumpTo(0f)
     }
 
-    fun bounds(gui: ClickGUI, row: PlacedRow, s: SelectorSetting): Rect {
+    fun bounds(gui: ClickGUI, row: PlacedRow, s: ChoiceOptions): Rect {
         val widest = s.options.maxOfOrNull { textWScaled(it, SETTINGS_VALUE_SCALE) } ?: 0
         val w = (LIST_PAD * 2 + CHECK_W + TEXT_GAP + widest).coerceAtLeast(MIN_W)
         val h = LIST_PAD * 2 + s.options.size * OPTION_H
@@ -50,7 +50,7 @@ internal object SelectorPopup {
     }
 
     fun draw(ctx: GuiGraphicsExtractor, gui: ClickGUI, row: PlacedRow, mx: Int, my: Int) {
-        val s = row.setting as? SelectorSetting ?: return
+        val s = row.setting as? ChoiceOptions ?: return
         val r = bounds(gui, row, s)
         val revealed = (r.h * reveal.value).toInt().coerceAtLeast(MIN_REVEAL)
         val clipTop = if (r.y >= row.y) r.y else r.y + r.h - revealed
@@ -59,13 +59,13 @@ internal object SelectorPopup {
         ctx.disableScissor()
     }
 
-    private fun drawList(ctx: GuiGraphicsExtractor, r: Rect, s: SelectorSetting, mx: Int, my: Int) {
+    private fun drawList(ctx: GuiGraphicsExtractor, r: Rect, s: ChoiceOptions, mx: Int, my: Int) {
         GobbyDraw.roundedBox(ctx, r.x, r.y, r.w, r.h, RADIUS, cShellBg, cShellEdge)
 
         val textH = (tr.lineHeight * SETTINGS_VALUE_SCALE).toInt()
         s.options.forEachIndexed { index, option ->
             val oy = r.y + LIST_PAD + index * OPTION_H
-            val selected = index == s.value
+            val selected = s.isChosen(index)
             val hovered = my in oy until (oy + OPTION_H) && mx in r.x..(r.x + r.w)
             CursorStyle.requestHandIf(hovered)
             if (hovered) GobbyDraw.roundedRect(ctx, r.x + HOVER_INSET, oy, r.w - HOVER_INSET * 2, OPTION_H, ROW_RADIUS, cRowHover)
@@ -84,7 +84,7 @@ internal object SelectorPopup {
     }
 
     fun handleClick(gui: ClickGUI, row: PlacedRow, mx: Int, my: Int): Boolean {
-        val s = row.setting as? SelectorSetting ?: return false
+        val s = row.setting as? ChoiceOptions ?: return false
         val r = bounds(gui, row, s)
         if ((mx to my) !in r) {
             gui.openSelector = null
@@ -92,10 +92,10 @@ internal object SelectorPopup {
         }
         val index = (my - r.y - LIST_PAD) / OPTION_H
         if (index in s.options.indices) {
-            s.value = index
+            s.pick(index)
             ConfigManager.save()
         }
-        gui.openSelector = null
+        if (s.closesOnPick) gui.openSelector = null
         return true
     }
 }

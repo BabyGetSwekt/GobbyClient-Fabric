@@ -2,7 +2,7 @@ package gobby.gui.click
 
 import org.lwjgl.glfw.GLFW
 
-private const val NUMBER_SYMBOLS = ".-"
+private const val NUMBER_SYMBOLS = ".-kKmM"
 
 object NumberInput {
 
@@ -10,11 +10,11 @@ object NumberInput {
 
     fun sanitize(raw: String): String = raw.filter { it.isDigit() || it in NUMBER_SYMBOLS }
 
-    fun isValid(text: String): Boolean = text.toFloatOrNull() != null
+    fun isValid(text: String): Boolean = NumberFormat.parse(text) != null
 
     fun begin(gui: ClickGUI, setting: NumberSetting) {
         gui.numberEditSetting = setting
-        gui.numberField.reset(setting.display())
+        gui.numberField.reset(setting.editText())
     }
 
     fun handleKey(gui: ClickGUI, setting: NumberSetting, key: Int): Boolean {
@@ -32,7 +32,7 @@ object NumberInput {
     }
 
     private fun commit(gui: ClickGUI, setting: NumberSetting) {
-        val parsed = gui.numberField.text.toFloatOrNull() ?: return
+        val parsed = NumberFormat.parse(gui.numberField.text) ?: return
         setting.setSnapped(parsed)
         gui.numberEditSetting = null
         ConfigManager.save()

@@ -29,10 +29,13 @@ object ConfigManager {
                         is RangeSetting -> mj.add(setting.name, JsonArray().apply { add(setting.value.start); add(setting.value.endInclusive) })
                         is StringSetting -> mj.addProperty(setting.name, setting.value)
                         is SelectorSetting -> mj.addProperty(setting.name, setting.value)
+                        is MultipleChoiceSetting -> mj.add(setting.name, JsonArray().apply { setting.value.forEach { add(it) } })
                         is ColorSetting -> mj.addProperty(setting.name, setting.value.rgb)
                         is KeybindSetting -> mj.addProperty(setting.name, setting.value)
                         is ActionSetting -> {}
                         is TextSetting -> {}
+                        is InfoSetting -> {}
+                        is FileSetting -> {}
                         is RefreshSetting -> {}
                         is ModelPreviewSetting -> {}
                         is HudButton -> {}
@@ -86,10 +89,16 @@ object ConfigManager {
                             }
                             is StringSetting -> { setting.value = mj.get(setting.name).asString; setting.onCommit(setting.value) }
                             is SelectorSetting -> setting.value = mj.get(setting.name).asInt
+                            is MultipleChoiceSetting -> mj.getAsJsonArray(setting.name)?.let { arr ->
+                                setting.value.clear()
+                                arr.forEach { setting.value.add(it.asString) }
+                            }
                             is ColorSetting -> setting.value = Color(mj.get(setting.name).asInt, true)
                             is KeybindSetting -> setting.value = mj.get(setting.name).asInt
                             is ActionSetting -> {}
                             is TextSetting -> {}
+                            is InfoSetting -> {}
+                        is FileSetting -> {}
                             is RefreshSetting -> {}
                             is ModelPreviewSetting -> {}
                             is HudButton -> {}

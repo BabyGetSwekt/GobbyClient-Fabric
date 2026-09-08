@@ -3,6 +3,9 @@ package gobby.gui.click
 import gobby.utils.timer.Clock
 
 private const val BLINK_MS = 530L
+private const val UNDO_LIMIT = 200
+
+private class Snapshot(val text: String, val caret: Int)
 
 class TextField(private val sanitize: (String) -> String, var maxLength: Int) {
 
@@ -13,8 +16,8 @@ class TextField(private val sanitize: (String) -> String, var maxLength: Int) {
     var anchor = 0
         private set
 
-    private var undoText: String? = null
-    private var undoCaret = 0
+    private val undoStack = ArrayDeque<Snapshot>()
+    private val redoStack = ArrayDeque<Snapshot>()
     private val blink = Clock()
 
     val selectionStart: Int get() = minOf(caret, anchor)
@@ -24,13 +27,19 @@ class TextField(private val sanitize: (String) -> String, var maxLength: Int) {
     fun reset(value: String) {
         text = sanitize(value).take(maxLength)
         selectAll()
-        undoText = null
+        forgetHistory()
+    }
+
+    fun load(value: String) {
+        text = sanitize(value).take(maxLength)
+        placeCaret(0, extend = false)
+        forgetHistory()
     }
 
     fun clear() {
         text = ""
         placeCaret(0, extend = false)
-        undoText = null
+        forgetHistory()
     }
 
     fun selectAll() {
@@ -80,18 +89,33 @@ class TextField(private val sanitize: (String) -> String, var maxLength: Int) {
 
     fun selectedText(): String = if (hasSelection) text.substring(selectionStart, selectionEnd) else text
 
-    fun undo() {
-        val previous = undoText ?: return
-        undoText = null
-        text = previous
-        placeCaret(undoCaret, extend = false)
-    }
+    fun undo() = step(undoStack, redoStack)
+
+    fun redo() = step(redoStack, undoStack)
 
     fun caretVisible(): Boolean = (blink.getTime() / BLINK_MS) % 2 == 0L
 
+    private fun step(from: ArrayDeque<Snapshot>, to: ArrayDeque<Snapshot>) {
+        while (from.isNotEmpty()) {
+            val snapshot = from.removeLast()
+            if (snapshot.text == text) continue
+            to.addLast(Snapshot(text, caret))
+            text = snapshot.text
+            placeCaret(snapshot.caret, extend = false)
+            return
+        }
+    }
+
+    private fun forgetHistory() {
+        undoStack.clear()
+        redoStack.clear()
+    }
+
     private fun rememberForUndo() {
-        undoText = text
-        undoCaret = caret
+        if (undoStack.lastOrNull()?.text == text) return
+        undoStack.addLast(Snapshot(text, caret))
+        if (undoStack.size > UNDO_LIMIT) undoStack.removeFirst()
+        redoStack.clear()
     }
 
     private fun removeSelection(): String {

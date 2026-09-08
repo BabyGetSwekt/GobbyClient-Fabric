@@ -3,6 +3,7 @@ package gobby.features.floor7
 import gobby.features.render.EntityHighlighter
 import gobby.features.render.EspStyle
 import gobby.gui.click.Category
+import gobby.utils.LocationUtils.dungeonFloor
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.boss.wither.WitherBoss
 import net.minecraft.world.phys.AABB
@@ -24,7 +25,7 @@ object WitherBossEsp : EntityHighlighter(
     override fun getColor(): Color = Color(0, 255, 0, 80)
 
     override fun shouldHighlight(entity: Entity): Boolean =
-        entity is WitherBoss && !entity.isInvisible && renderScale(entity) >= MIN_BOSS_RENDER_SCALE
+        entity is WitherBoss && !entity.isInvisible && renderScale(entity) >= MIN_BOSS_RENDER_SCALE && dungeonFloor == 7
 
     override fun boxFor(entity: Entity): AABB {
         if (entity !is WitherBoss) return entity.boundingBox

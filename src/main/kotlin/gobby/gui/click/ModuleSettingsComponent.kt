@@ -8,8 +8,6 @@ private const val SECTION_TEXT_PAD = 3
 
 object ModuleSettingsComponent {
 
-    fun settingHeight(s: Setting<*>): Int = SettingsLayout.rowHeight(s)
-
     fun visibleSettings(mod: Module): List<Setting<*>> =
         mod.allSettings().filter { it.isVisible && it.parentDropdown == null }
 
@@ -48,7 +46,7 @@ object ModuleSettingsComponent {
 
         block.rows.forEach { row ->
             val shifted = row.copy(y = row.y + shift)
-            val clickable = row.setting !is ModelPreviewSetting
+            val clickable = row.setting !is ModelPreviewSetting && row.setting !is InfoSetting
             val hovered = clickable && (mx to my) in shifted.rect
             CursorStyle.requestHandIf(hovered)
             SettingsControls.draw(ctx, gui, shifted, hovered, mx, my)

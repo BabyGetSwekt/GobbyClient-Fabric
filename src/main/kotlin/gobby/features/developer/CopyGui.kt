@@ -8,14 +8,10 @@ import gobby.gui.click.KeybindSetting
 import gobby.gui.click.Module
 import gobby.utils.ChatUtils.errorMessage
 import gobby.utils.ChatUtils.modMessage
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
-import net.minecraft.core.component.DataComponents
-import net.minecraft.world.item.component.ItemLore
-import gobby.utils.encodeNbt
-import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.ChatFormatting
-import java.io.File
 import gobby.utils.ConfigUtils
+import gobby.utils.GuiDump
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
+import java.io.File
 
 object CopyGui : Module("Copy GUI", "Press the keybind in a GUI to dump its contents to /schematics", Category.DEVELOPER) {
 
@@ -40,60 +36,11 @@ object CopyGui : Module("Copy GUI", "Press the keybind in a GUI to dump its cont
     }
 
     private fun copyScreen(screen: AbstractContainerScreen<*>) {
-        val handler = screen.menu
         val title = screen.title.string
-        val world = mc.level ?: return
-
-        val sb = StringBuilder()
-        sb.appendLine("{")
-        sb.appendLine("  \"title\": ${jsonString(title)},")
-        sb.appendLine("  \"size\": ${handler.slots.size},")
-        sb.appendLine("  \"slots\": [")
-
-        val nonEmpty = handler.slots.filter { !it.item.isEmpty }
-        for ((i, slot) in nonEmpty.withIndex()) {
-            val stack = slot.item
-            val itemId = BuiltInRegistries.ITEM.getKey(stack.item).toString()
-            val name = ChatFormatting.stripFormatting(stack.hoverName.string) ?: ""
-            val lore = stack.getOrDefault(DataComponents.LORE, ItemLore.EMPTY).styledLines()
-                .map { ChatFormatting.stripFormatting(it.string) ?: "" }
-            val nbt = stack.encodeNbt().orEmpty()
-            val comma = if (i < nonEmpty.size - 1) "," else ""
-
-            sb.appendLine("    {")
-            sb.appendLine("      \"slot\": ${slot.index},")
-            sb.appendLine("      \"item\": ${jsonString(itemId)},")
-            sb.appendLine("      \"count\": ${stack.count},")
-            sb.appendLine("      \"name\": ${jsonString(name)},")
-            sb.appendLine("      \"lore\": [${lore.joinToString(",") { jsonString(it) }}],")
-            sb.appendLine("      \"nbt\": ${jsonString(nbt)}")
-            sb.appendLine("    }$comma")
-        }
-
-        sb.appendLine("  ]")
-        sb.appendLine("}")
-
-        val safeTitle = title.replace(Regex("[^A-Za-z0-9_-]"), "_").take(40).ifBlank { "container" }
-        val file = File(schematicsDir, "gui_${safeTitle}_${System.currentTimeMillis()}.json")
-        file.writeText(sb.toString())
-        modMessage("§aCopied GUI §f\"$title\" §a(${nonEmpty.size}/${handler.slots.size} slots) to §e${file.name}")
-    }
-
-    private fun jsonString(s: String): String {
-        val out = StringBuilder("\"")
-        for (c in s) {
-            when (c) {
-                '\\' -> out.append("\\\\")
-                '"' -> out.append("\\\"")
-                '\n' -> out.append("\\n")
-                '\r' -> out.append("\\r")
-                '\t' -> out.append("\\t")
-                '\b' -> out.append("\\b")
-                '\u000C' -> out.append("\\f")
-                else -> if (c.code < 0x20) out.append("\\u%04x".format(c.code)) else out.append(c)
-            }
-        }
-        out.append('"')
-        return out.toString()
+        val file = File(schematicsDir, "gui_${GuiDump.safeName(title)}_${System.currentTimeMillis()}.json")
+        file.writeText(ConfigUtils.gson.toJson(GuiDump.of(screen)))
+        modMessage(
+            "§aCopied GUI §f\"$title\" §a(${GuiDump.filledCount(screen)}/${screen.menu.slots.size} slots) to §e${file.name}"
+        )
     }
 }

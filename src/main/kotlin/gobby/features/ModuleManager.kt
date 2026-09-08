@@ -27,6 +27,12 @@ import gobby.utils.managers.*
 import gobby.utils.render.*
 import gobby.utils.rotation.RotationUtils
 import gobby.pathfinder.etherwarp.EtherwarpServerTickGate
+import gobby.features.dungeons.croesus.AutoCroesus
+import gobby.features.dungeons.croesus.CroesusClicker
+import gobby.features.dungeons.croesus.CroesusData
+import gobby.features.dungeons.croesus.CroesusFlow
+import gobby.features.dungeons.croesus.CroesusProfitOverlay
+import gobby.utils.skyblock.SkyblockPrices
 import gobby.utils.skyblock.dungeon.*
 import gobby.utils.skyblock.dungeon.map.*
 import gobby.utils.timer.Executor
@@ -88,6 +94,11 @@ object ModuleManager {
             NotificationRenderer,
             HotbarTracker,
             ArmorTracker,
+            SkyblockPrices,
+            CroesusProfitOverlay,
+            CroesusClicker,
+            CroesusData,
+            CroesusFlow,
             DungeonMapSaver,
             DungeonMapSource,
             DungeonMapPlayers,
@@ -147,6 +158,7 @@ object ModuleManager {
         AutoGFS,
         AutoUlt,
         AutoRequeue,
+        AutoCroesus,
         WitherBossEsp,
         BloodCampHelper,
         AutoJax,
@@ -188,6 +200,7 @@ object ModuleManager {
         DrawSlotNumbers,
         CopyGui,
         CopyItemNbt,
+        GuiLogger,
         ArmorStandSaver,
         MobSaver,
         MessageDebugger,

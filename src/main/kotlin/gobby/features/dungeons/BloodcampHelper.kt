@@ -339,7 +339,7 @@ object BloodCampHelper : Module(
 private val BLOOD_START = Regex("""^\[BOSS] The Watcher: (Congratulations, you made it through the Entrance\.|Ah, you've finally arrived\.|Ah, we meet again\.\.\.|So you made it this far\.\.\. interesting\.|You've managed to scratch and claw your way here, eh\?|I'm starting to get tired of seeing you around here\.\.\.|Oh\.\. hello\?|Things feel a little more roomy now, eh\?)$""")
 private val BLOOD_MOVE = Regex("""^\[BOSS] The Watcher: Let's see how you can handle this\.$""")
 private val BLOOD_MOB_TAG = Regex("""\b(?:Healthy|Speedy|Stealth|Golden|Boomer|Stormy)\b""")
-private val CAMP_WEAPONS = setOf("DARK_CLAYMORE", "GIANTS_SWORD", "MIDAS_SWORD", "ASTRAEA", "HYPERION", "VALKYRIE", "SCYLLA")
+private val CAMP_WEAPONS = setOf("DARK_CLAYMORE", "GIANTS_SWORD", "MIDAS_SWORD", "ASTRAEA", "HYPERION", "VALKYRIE", "SCYLLA", "MIDAS_SWORD", "STARRED_MIDAS_SWORD")
 
 private val WATCHER_SKULLS = setOf(
     "ewogICJ0aW1lc3RhbXAiIDogMTY5NzMwOTQxNzI1NiwKICAicHJvZmlsZUlkIiA6ICJjYjYxY2U5ODc4ZWI0NDljODA5MzliNWYxNTkwMzE1MiIsCiAgInByb2ZpbGVOYW1lIiA6ICJWb2lkZWRUcmFzaDUxODUiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTY2MmI2ZmI0YjhiNTg2ZGM0Y2RmODAzYjA0NDRkOWI0MWQyNDVjZGY2NjhkYWIzOGZhNmMwNjRhZmU4ZTQ2MSIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9",
