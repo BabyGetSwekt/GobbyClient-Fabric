@@ -1,6 +1,7 @@
 package gobby.features.dungeons.croesus
 
 import gobby.Gobbyclient.Companion.mc
+import gobby.events.ChatReceivedEvent
 import gobby.events.DungeonRunEndEvent
 import gobby.events.KeyPressGuiEvent
 import gobby.events.ScreenReceivedEvent
@@ -23,6 +24,9 @@ import gobby.utils.Island
 import gobby.utils.LocationUtils
 import gobby.utils.Utils.executeLater
 import gobby.utils.skyblock.SkyblockPrices
+import net.minecraft.network.chat.ClickEvent
+import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.HoverEvent
 
 private val BUYING_SECTION = SettingSection("Buying Chest", SettingAlign.LEFT)
 private val PROFIT_SECTION = SettingSection("Profit GUI", SettingAlign.LEFT)
@@ -35,10 +39,6 @@ object AutoCroesus : Module(
     Category.DUNGEONS
 ) {
 
-    private const val MINIMUM_FLOOR = 1
-    private const val MINIMUM_CEILING = 50_000_000
-    private const val MINIMUM_STEP = 1
-    private const val CHEST_KEY_DEFAULT_MINIMUM = 500_000
     private const val BUY_INFO =
         "Minimum profit a chest MUST have before it will be bought. The most profitable chest will always be " +
             "bought. So if a Gold chest gives +800k and a Bedrock chest only +100k, then the Gold chest will be " +
@@ -54,7 +54,7 @@ object AutoCroesus : Module(
 
     private val minimumProfits = ChestTier.entries.associateWith { tier ->
         NumberSetting(
-            "Minimum Buy ${tier.displayName}", defaultMinimumFor(tier), MINIMUM_FLOOR, MINIMUM_CEILING, MINIMUM_STEP,
+            "Minimum Buy ${tier.displayName}", defaultMinimumFor(tier), 1, 50_000_000, 1,
             desc = "Only buy the ${tier.displayName} chest when it profits at least this much"
         ).inGroup(BUYING_SECTION).also { settings.add(it) }
     }
@@ -78,8 +78,9 @@ object AutoCroesus : Module(
     ).inGroup(SECOND_CHEST_SECTION)
 
     private val chestKeyMinProfit by NumberSetting(
-        "Minimum Profit", CHEST_KEY_DEFAULT_MINIMUM, MINIMUM_FLOOR, MINIMUM_CEILING, MINIMUM_STEP,
-        desc = "Only spend a key when the chest is worth at least this much"
+        "Minimum Profit", 500_000, 0, 2_000_000, 1,
+        desc = "Only spend a key when the chest profits at least this much. " +
+            "If the key costs 300k, and chest profit is 700k, then net profit is 400k"
     ).withDependency { useChestKeys }.inGroup(SECOND_CHEST_SECTION)
 
     private val clickDelay by NumberSetting(
@@ -129,25 +130,43 @@ object AutoCroesus : Module(
 
     private var fetchingPrices = false
 
-    fun minimumProfitFor(tier: ChestTier): Float = minimumProfits[tier]?.floatValue ?: MINIMUM_FLOOR.toFloat()
+    fun minimumProfitFor(tier: ChestTier): Float = minimumProfits[tier]?.floatValue ?: 1f
 
     private fun defaultMinimumFor(tier: ChestTier): Int =
-        if (tier == ChestTier.GOLD) 50_000 else MINIMUM_FLOOR
+        if (tier == ChestTier.GOLD) 50_000 else 1
 
     val chestKeyMinimum: Float get() = chestKeyMinProfit.toFloat()
 
-    fun canSpendKey(run: TrackedRun): Boolean = useChestKeys && !run.hasUsedChestKey
+    fun rerollsFloor(floor: Int, masterMode: Boolean): Boolean =
+        autoKismet && floorLabel(floor, masterMode) in rerollFloors
 
-    fun shouldReroll(floor: Int, masterMode: Boolean, tier: ChestTier, chest: PricedChest): Boolean {
-        if (!autoKismet) return false
-        if (floorLabel(floor, masterMode) !in rerollFloors) return false
+    fun shouldReroll(run: TrackedRun, tier: ChestTier, priced: PricedChest?): Boolean {
+        if (run.hasRerolled || priced == null) return false
+        if (CroesusFilters.holdsAlwaysBuy(priced)) return false
+        if (!rerollsFloor(run.floor, run.masterMode)) return false
         if (tier.ordinal != rerollTier) return false
-        return chest.profit < rerollBelow
+        return priced.profit < rerollBelow
     }
 
     fun onMissingKismet() {
         stop()
-        errorMessage("No kismets detected, buy some or disable auto reroll")
+        errorMessage(Component.literal("No kismets detected, buy some or disable auto reroll")
+            .withStyle { it.withClickEvent(ClickEvent.RunCommand("/bz Kismet Feather")) }
+            .withStyle { it.withHoverEvent(HoverEvent.ShowText(Component.literal("§eClick to run \"/bz Kismet Feather\""))) }
+        )
+    }
+
+    @SubscribeEvent
+    fun onChat(event: ChatReceivedEvent) {
+        if (!isAutoOpening) return
+        if (event.message != "You need a Dungeon Chest Key to open another chest!") return
+        event.cancel()
+        stop()
+        errorMessage(
+            Component.literal("No Dungeon Chest Keys detected, buy some or disable Use Dungeon Chest Key")
+                .withStyle { it.withClickEvent(ClickEvent.RunCommand("/bz Dungeon Chest Key")) }
+                .withStyle { it.withHoverEvent(HoverEvent.ShowText(Component.literal("§eClick to run \"/bz Dungeon Chest Key\""))) }
+        )
     }
 
     fun stop() {

@@ -25,6 +25,9 @@ object CroesusData {
 
     private val runs = linkedMapOf<Pair<Int, Int>, TrackedRun>()
     private val handled = mutableSetOf<Pair<Int, Int>>()
+    private val spentKismet = mutableSetOf<Pair<Int, Int>>()
+    private val spentKey = mutableSetOf<Pair<Int, Int>>()
+    private val chestsByRun = mutableMapOf<Pair<Int, Int>, List<CroesusChest>>()
 
     var scannedPages = false
         private set
@@ -54,9 +57,30 @@ object CroesusData {
         handled.add(run.key)
     }
 
+    fun markKismetSpent(run: TrackedRun) {
+        spentKismet.add(run.key)
+    }
+
+    fun markKeySpent(run: TrackedRun) {
+        spentKey.add(run.key)
+    }
+
+    fun recordChests(run: TrackedRun, chests: List<CroesusChest>) {
+        chestsByRun[run.key] = chests
+    }
+
+    fun chestsOf(run: TrackedRun): List<CroesusChest>? = chestsByRun[run.key]
+
+    fun canReroll(run: TrackedRun): Boolean = !run.hasRerolled && run.key !in spentKismet
+
+    fun canOpenWithKey(run: TrackedRun): Boolean = !run.hasUsedChestKey && run.key !in spentKey
+
     fun clear() {
         runs.clear()
         handled.clear()
+        spentKismet.clear()
+        spentKey.clear()
+        chestsByRun.clear()
         scannedPages = false
         lastPage = 1
     }

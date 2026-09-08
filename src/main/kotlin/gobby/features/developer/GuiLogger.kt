@@ -41,7 +41,7 @@ object GuiLogger : Module(
     @SubscribeEvent
     fun onKeyPress(event: KeyPressGuiEvent) {
         if (!enabled || recordKey == 0 || event.key != recordKey) return
-        if (active) return
+        if (active || mc.gui.screen() != null) return
         events = JsonArray()
         openScreen = mc.gui.screen() as? AbstractContainerScreen<*>
         active = true
@@ -76,8 +76,8 @@ object GuiLogger : Module(
     }
 
     private fun clickedName(slot: Int): String =
-        openScreen?.menu?.slots?.getOrNull(slot)?.item?.takeUnless { it.isEmpty }
-            ?.hoverName?.string?.noControlCodes.orEmpty()
+        (mc.gui.screen() as? AbstractContainerScreen<*>)?.menu?.slots?.getOrNull(slot)
+            ?.item?.takeUnless { it.isEmpty }?.hoverName?.string?.noControlCodes.orEmpty()
 
     private fun recordScreen() {
         val screen = openScreen ?: return
