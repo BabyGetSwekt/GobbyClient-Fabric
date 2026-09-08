@@ -160,6 +160,7 @@ object CroesusFlow {
 
     private fun worthVisiting(): List<TrackedRun> = CroesusData.openable
         .filterNot { it.hasUsedChestKey }
+        .filterNot { it.needsChestKey && AutoCroesus.ignoresOpenedChests }
         .filter { !it.needsChestKey || AutoCroesus.usesChestKeys || canStillReroll(it) }
         .filter { hasSomethingToOpen(it) }
 
@@ -169,7 +170,8 @@ object CroesusFlow {
     }
 
     private fun canStillReroll(run: TrackedRun): Boolean =
-        CroesusData.canReroll(run) && AutoCroesus.rerollsFloor(run.floor, run.masterMode)
+        CroesusData.canReroll(run) && !AutoCroesus.rerollTierIsOpen(run) &&
+            AutoCroesus.rerollsFloor(run.floor, run.masterMode)
 
     private fun canSpendKey(run: TrackedRun): Boolean =
         AutoCroesus.usesChestKeys && CroesusData.canOpenWithKey(run)

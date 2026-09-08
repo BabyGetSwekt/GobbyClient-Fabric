@@ -5,8 +5,6 @@ import gobby.events.ClientTickEvent
 import gobby.events.PacketReceivedEvent
 import gobby.events.WorldLoadEvent
 import gobby.events.core.SubscribeEvent
-import gobby.utils.ChatUtils.modMessage
-import gobby.utils.ChatUtils.noControlCodes
 import gobby.utils.ContainerClicks
 import gobby.utils.Utils.getRandomInt
 import gobby.utils.timer.Clock
@@ -57,8 +55,7 @@ object CroesusClicker {
         val slot = pendingSlot ?: return
         if (!clickClock.hasTimePassed(nextClickDelay)) return
         val screen = mc.gui.screen() as? AbstractContainerScreen<*> ?: return
-        val stack = screen.menu.slots.getOrNull(slot)?.item?.takeUnless { it.isEmpty } ?: return
-        modMessage("§7Clicking slot §f$slot §7(§f${stack.hoverName.string.noControlCodes}§7) in §f${screen.title.string.noControlCodes}")
+        if (screen.menu.slots.getOrNull(slot)?.item?.isEmpty != false) return
         ContainerClicks.pickup(screen.menu.containerId, slot)
         pendingSlot = null
         restartDelay()

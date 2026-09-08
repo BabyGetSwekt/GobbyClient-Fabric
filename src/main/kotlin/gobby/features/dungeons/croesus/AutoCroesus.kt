@@ -47,7 +47,8 @@ object AutoCroesus : Module(
 
     private const val KISMET_INFO =
         "It is HIGHLY recommended to enable \"Use Dungeon Chest Key\" as well, so that it actually opens those chests " +
-            "too if it's profit in runs where you've already opened a chest, or else you are just wasting a kismet."
+            "too if it's profit in runs where you've already opened a chest, or else you are just wasting a kismet. " +
+            "Or enable \"Ignore Opened Chests\" so those runs are skipped entirely."
 
     private val FLOORS = listOf("F1", "F2", "F3", "F4", "F5", "F6", "F7", "M1", "M2", "M3", "M4", "M5", "M6", "M7")
 
@@ -65,6 +66,11 @@ object AutoCroesus : Module(
 
     private val ignoreEssence by BooleanSetting(
         "Ignore Essence Price", false, desc = "Leaves essence out of the profit calculation"
+    ).inGroup(BUYING_SECTION)
+
+    private val ignoreOpenedChests by BooleanSetting(
+        "Ignore Opened Chests", false,
+        desc = "Never look at runs where a chest was already opened, even if a kismet or key is still available"
     ).inGroup(BUYING_SECTION)
 
     private val worthlessItems by FileSetting(
@@ -117,6 +123,8 @@ object AutoCroesus : Module(
 
     val usesChestKeys: Boolean get() = useChestKeys
 
+    val ignoresOpenedChests: Boolean get() = ignoreOpenedChests
+
     val worthless: Set<String> get() = worthlessItems
 
     val alwaysBuy: Set<String> get() = alwaysBuyItems
@@ -141,11 +149,13 @@ object AutoCroesus : Module(
     fun rerollsFloor(floor: Int, masterMode: Boolean): Boolean =
         autoKismet && floorLabel(floor, masterMode) in rerollFloors
 
+    fun rerollTierIsOpen(run: TrackedRun): Boolean = run.openedChest?.ordinal == rerollTier
+
     fun shouldReroll(run: TrackedRun, tier: ChestTier, priced: PricedChest?): Boolean {
         if (run.hasRerolled || priced == null) return false
         if (CroesusFilters.holdsAlwaysBuy(priced)) return false
         if (!rerollsFloor(run.floor, run.masterMode)) return false
-        if (tier.ordinal != rerollTier) return false
+        if (tier.ordinal != rerollTier || rerollTierIsOpen(run)) return false
         return priced.profit < rerollBelow
     }
 
