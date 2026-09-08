@@ -25,23 +25,24 @@ object CroesusRewardMenu {
 
     fun evaluate(screen: AbstractContainerScreen<*>): ChestEvaluation? {
         val stack = stackAt(screen, OPEN_SLOT) ?: return null
-        val lore = stack.getLoreStrings().map { it.noControlCodes.trimEnd() }
+        val lore = stack.getLoreStrings()
         val rewards = section(lore, "Contents")
-        val cost = section(lore, COST_HEADER).firstOrNull() ?: return null
-        if (rewards.isEmpty()) return null
-        return CroesusPricing.evaluate(cost, rewards)
+        val costs = section(lore, COST_HEADER)
+        if (rewards.isEmpty() || costs.isEmpty()) return null
+        val needsKey = costs.any { it.noControlCodes.trim() == CroesusChestMenu.CHEST_KEY_COST }
+        return CroesusPricing.evaluate(costs, rewards, needsKey)
     }
 
     fun requiresKey(screen: AbstractContainerScreen<*>): Boolean {
         val stack = stackAt(screen, OPEN_SLOT) ?: return false
-        val lore = stack.getLoreStrings().map { it.noControlCodes.trimEnd() }
-        return section(lore, COST_HEADER).any { it == CroesusChestMenu.CHEST_KEY_COST }
+        return section(stack.getLoreStrings(), COST_HEADER)
+            .any { it.noControlCodes.trim() == CroesusChestMenu.CHEST_KEY_COST }
     }
 
     private fun section(lore: List<String>, header: String): List<String> {
-        val start = lore.indexOfFirst { it.trim() == header }
+        val start = lore.indexOfFirst { it.noControlCodes.trim() == header }
         if (start == -1) return emptyList()
-        return lore.drop(start + 1).takeWhile { it.isNotBlank() }
+        return lore.drop(start + 1).takeWhile { it.noControlCodes.isNotBlank() }
     }
 
     private fun stackAt(screen: AbstractContainerScreen<*>, slot: Int): ItemStack? =

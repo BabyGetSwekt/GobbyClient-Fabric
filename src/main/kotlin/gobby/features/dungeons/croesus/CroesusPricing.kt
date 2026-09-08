@@ -8,7 +8,7 @@ class CroesusReward(val itemId: String, val amount: Int, val unitValue: Double, 
     val total: Double get() = unitValue * amount
 }
 
-class PricedChest(val cost: Long, val rewards: List<CroesusReward>) {
+class PricedChest(val cost: Double, val rewards: List<CroesusReward>) {
     val value: Double get() = rewards.sumOf { it.total }
     val profit: Double get() = value - cost
 }
@@ -22,6 +22,7 @@ object CroesusPricing {
 
     private const val ESSENCE_PREFIX = "ESSENCE_"
     private const val PET_PREFIX = "PET-"
+    private const val CHEST_KEY_ID = "DUNGEON_CHEST_KEY"
 
     private val PET_TIERS = mapOf(
         'f' to "COMMON", 'a' to "UNCOMMON", '9' to "RARE",
@@ -49,36 +50,36 @@ object CroesusPricing {
         "Livid Dye" to "DYE_LIVID"
     )
 
-    fun evaluate(costLine: String, rewardLines: List<String>): ChestEvaluation {
-        val cost = parseCost(costLine) ?: return ChestEvaluation.Unknown("Unreadable chest cost \"$costLine\"")
+    fun evaluate(costLines: List<String>, rewardLines: List<String>, requiresKey: Boolean = false): ChestEvaluation {
+        val coins = coinsOf(costLines)
+        val keyPrice = if (!requiresKey) 0.0
+        else valueOf(CHEST_KEY_ID) ?: return ChestEvaluation.Unknown("No price for a Dungeon Chest Key")
         val rewards = rewardLines.map { line ->
             val reward = rewardOf(line) ?: return ChestEvaluation.Unknown("No price for \"${line.noControlCodes}\"")
             reward
         }
-        return ChestEvaluation.Priced(PricedChest(cost, rewards))
+        return ChestEvaluation.Priced(PricedChest(coins + keyPrice, rewards))
     }
 
     fun rewardOf(line: String): CroesusReward? {
         val plain = line.noControlCodes.trim()
         val (itemId, amount) = identify(line, plain) ?: return null
+        if (isIgnored(itemId)) return CroesusReward(itemId, amount, 0.0, plain)
         val value = valueOf(itemId) ?: return null
-        val counted = if (isIgnored(itemId)) 0.0 else value
-        return CroesusReward(itemId, amount, counted, plain)
+        return CroesusReward(itemId, amount, value, plain)
     }
 
     private fun isIgnored(itemId: String): Boolean =
         CroesusFilters.isWorthless(itemId) || (AutoCroesus.ignoresEssence && itemId.startsWith(ESSENCE_PREFIX))
 
-    fun isFreeCost(costLine: String): Boolean = parseCost(costLine) == 0L
+    fun isFreeCost(costLines: List<String>): Boolean = coinsOf(costLines) == 0L
 
     fun valueOf(itemId: String): Double? =
         SkyblockPrices.bazaarProduct(itemId)?.sell ?: SkyblockPrices.lowestBin(itemId)
 
-    private fun parseCost(costLine: String): Long? {
-        val plain = costLine.noControlCodes.trim()
-        if (plain == "FREE") return 0L
-        return COST.matchEntire(plain)?.groupValues?.get(1)?.replace(",", "")?.toLongOrNull()
-    }
+    private fun coinsOf(costLines: List<String>): Long = costLines.firstNotNullOfOrNull { line ->
+        COST.matchEntire(line.noControlCodes.trim())?.groupValues?.get(1)?.replace(",", "")?.toLongOrNull()
+    } ?: 0L
 
     private fun identify(line: String, plain: String): Pair<String, Int>? =
         asEssence(plain) ?: asBook(plain) ?: asPet(line, plain) ?: asItem(plain)

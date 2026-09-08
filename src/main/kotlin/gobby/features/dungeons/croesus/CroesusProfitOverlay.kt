@@ -91,7 +91,7 @@ object CroesusProfitOverlay {
 
     private fun drawOverview(ctx: GuiGraphicsExtractor, screen: AbstractContainerScreen<*>, mouseX: Int, mouseY: Int) {
         val rows = CroesusChestMenu.chests(screen).map { chest ->
-            ProfitRow(chest.slot, iconAt(screen, chest.slot), chest.tier.displayName, CroesusPricing.evaluate(chest.costLine, chest.rewardLines))
+            ProfitRow(chest.slot, iconAt(screen, chest.slot), chest.tier.displayName, CroesusPricing.evaluate(chest.costLines, chest.rewardLines, chest.requiresKey))
         }
         if (rows.isEmpty()) return
 

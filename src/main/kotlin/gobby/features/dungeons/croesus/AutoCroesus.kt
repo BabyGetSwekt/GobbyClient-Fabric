@@ -83,13 +83,8 @@ object AutoCroesus : Module(
 
     private val chestKeyMinProfit by NumberSetting(
         "Minimum Profit", 500_000, 0, 2_000_000, 1,
-        desc = "Only spend a key when the chest profits at least this much. " +
-            "If the key costs 300k, and chest profit is 700k, then net profit is 400k"
+        desc = "Only spend a key when the chest profits at least this much"
     ).withDependency { useChestKeys }.inGroup(SECOND_CHEST_SECTION)
-
-    private val clickDelay by NumberSetting(
-        "Click Delay", 300, 150, 500, 50, desc = "Milliseconds to wait after a menu has finished loading"
-    ).inGroup(BUYING_SECTION)
 
     private val profitOverlay by BooleanSetting(
         "Profit GUI", true, desc = "Shows the profit of every chest next to the reward menu"
@@ -126,7 +121,6 @@ object AutoCroesus : Module(
 
     val alwaysBuy: Set<String> get() = alwaysBuyItems
 
-    val clickDelayMs: Long get() = clickDelay.toLong()
 
     val showProfitOverlay: Boolean get() = enabled && profitOverlay
 

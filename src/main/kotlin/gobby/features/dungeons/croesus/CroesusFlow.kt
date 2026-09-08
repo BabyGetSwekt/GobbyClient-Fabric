@@ -257,7 +257,7 @@ object CroesusFlow {
         priced.profit >= if (chest.requiresKey) AutoCroesus.chestKeyMinimum else AutoCroesus.minimumProfitFor(chest.tier)
 
     private fun pricedOf(chest: CroesusChest): PricedChest? =
-        (CroesusPricing.evaluate(chest.costLine, chest.rewardLines) as? ChestEvaluation.Priced)?.chest
+        (CroesusPricing.evaluate(chest.costLines, chest.rewardLines, chest.requiresKey) as? ChestEvaluation.Priced)?.chest
 
     private fun confirmChest() {
         val screen = mc.gui.screen() as? AbstractContainerScreen<*> ?: return

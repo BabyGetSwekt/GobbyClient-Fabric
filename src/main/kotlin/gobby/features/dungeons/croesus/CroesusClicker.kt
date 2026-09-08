@@ -69,6 +69,6 @@ object CroesusClicker {
 
     private fun restartDelay() {
         clickClock.update()
-        nextClickDelay = AutoCroesus.clickDelayMs + getRandomInt(0, 100)
+        nextClickDelay = 150L + getRandomInt(0, 100)
     }
 }

@@ -17,11 +17,11 @@ enum class ChestTier(val displayName: String) {
 class CroesusChest(
     val slot: Int,
     val tier: ChestTier,
-    val costLine: String,
+    val costLines: List<String>,
     val rewardLines: List<String>,
     val requiresKey: Boolean
 ) {
-    val isFree: Boolean get() = !requiresKey && CroesusPricing.isFreeCost(costLine)
+    val isFree: Boolean get() = !requiresKey && CroesusPricing.isFreeCost(costLines)
 }
 
 object CroesusChestMenu {
@@ -54,18 +54,17 @@ object CroesusChestMenu {
 
     private fun chestOf(slot: Int, stack: ItemStack): CroesusChest? {
         val tier = ChestTier.of(stack.hoverName.string.noControlCodes.trim()) ?: return null
-        val lore = stack.getLoreStrings().map { it.noControlCodes.trimEnd() }
+        val lore = stack.getLoreStrings()
         val rewards = section(lore, CONTENTS_HEADER)
         val costs = section(lore, COST_HEADER)
-        val coins = costs.firstOrNull() ?: return null
-        if (rewards.isEmpty()) return null
-        return CroesusChest(slot, tier, coins, rewards, costs.any { it == CHEST_KEY_COST })
+        if (rewards.isEmpty() || costs.isEmpty()) return null
+        return CroesusChest(slot, tier, costs, rewards, costs.any { it.noControlCodes.trim() == CHEST_KEY_COST })
     }
 
     private fun section(lore: List<String>, header: String): List<String> {
-        val start = lore.indexOfFirst { it.trim() == header }
+        val start = lore.indexOfFirst { it.noControlCodes.trim() == header }
         if (start == -1) return emptyList()
-        return lore.drop(start + 1).takeWhile { it.isNotBlank() }
+        return lore.drop(start + 1).takeWhile { it.noControlCodes.isNotBlank() }
     }
 
     private fun titleMatch(title: String): MatchResult? = TITLE.matchEntire(title.noControlCodes.trim())

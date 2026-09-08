@@ -42,7 +42,13 @@ public class MixinScreen {
 		BlockSelector.Companion.setCurrentDrawContext(null);
 	}
 
-	@Inject(method = "extractRenderStateWithTooltipAndSubtitles", at = @At("RETURN"))
+	@Inject(
+		method = "extractRenderStateWithTooltipAndSubtitles",
+		at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;extractDeferredElements(IIF)V"
+		)
+	)
 	private void gobbyclient$onScreenRender(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
 		Gobbyclient.EVENT_MANAGER.publish(new ScreenRenderEvent((Screen)(Object)this, context, mouseX, mouseY, delta));
 	}
