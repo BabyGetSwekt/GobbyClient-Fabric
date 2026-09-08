@@ -43,7 +43,11 @@ object AutoCroesus : Module(
         "Minimum profit a chest MUST have before it will be bought. The most profitable chest will always be " +
             "bought. So if a Gold chest gives +800k and a Bedrock chest only +100k, then the Gold chest will be " +
             "bought. Do not set these values too high, because it will result in it only buying the wooden chest. " +
-            "Setting this to 1 always buys the chest when it is profit."
+            "Setting this to 1 always buys the chest when it is profit. Recommended to keep at default settings."
+
+    private const val KISMET_INFO =
+        "It is HIGHLY recommended to enable \"Use Dungeon Chest Key\" as well, so that it actually opens those chests " +
+            "too if it's profit in runs where you've already opened a chest, or else you are just wasting a kismet."
 
     private val FLOORS = listOf("F1", "F2", "F3", "F4", "F5", "F6", "F7", "M1", "M2", "M3", "M4", "M5", "M6", "M7")
 
@@ -97,6 +101,9 @@ object AutoCroesus : Module(
 
     private val autoKismet by BooleanSetting("Auto Kismet", false, desc = "Reroll chests with a kismet feather")
         .inGroup(REROLL_SECTION)
+
+    private val kismetInfo by InfoSetting(KISMET_INFO)
+        .withDependency { autoKismet }.inGroup(REROLL_SECTION)
 
     private val rerollFloors by MultipleChoiceSetting(
         "Reroll Floors", FLOORS, setOf("F7", "M7"), desc = "Only reroll on these floors"
